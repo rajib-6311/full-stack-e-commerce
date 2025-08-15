@@ -1,10 +1,11 @@
 import { useState } from "react";
 import axios from 'axios';
 import toast from 'react-hot-toast'
+import { serverURL } from "../../config.js";
 
 
 const Login = ({ setToken }) => {
-    const serverURL = import.meta.env.VITE_BACKEND_URL
+    
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('')
 

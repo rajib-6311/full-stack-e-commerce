@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 const Navbar = ({token, setToken}) => {
 
     const handleToken = () => {
-        setToken(' ')
+        setToken("")
     }
     return (
         <>
@@ -16,13 +16,19 @@ const Navbar = ({token, setToken}) => {
                     <p>Hi! Admin</p>
                     {
                         token ?
-                            <button
+                          (
+                              <button
                                 onClick={handleToken}
-                                className='border rounded-full text-sm px-4 py-1'>Logout
-                            </button> :
-                            <button
-                                className='border rounded-full text-sm px-4 py-1'>Login
+                                className='border rounded-full text-sm px-4 py-1 cursor-pointer'>Logout
                             </button>
+                          )
+                             :
+                            (
+                                <button
+                            
+                                className='border rounded-full text-sm px-4 py-1 cursor-pointer'>Login
+                            </button>
+                            )
                     }
                 </div>
             </div>
