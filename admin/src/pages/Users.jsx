@@ -53,21 +53,23 @@ const Users = ({ token }) => {
               {
                 userList?.length > 0 ?
                   <div className="max-w-4xl flex flex-col gap-2 mt-2">
-                    <div className="grid grid-cols-[2fr_1fr_1fr] md:grid-cols-[2fr_2fr_1fr_1fr] items-center py-2 px-2 border bg-gray-100 my-1.5">
-                      <b>name</b>
-                      <b>email</b>
-                      <b>action</b>
-                      <b>edit</b>
+                    <div className="grid grid-cols-[2fr_1fr_1fr] md:grid-cols-[2fr_2fr_1fr_1fr_1fr] items-center py-2 px-2 border bg-gray-100 my-1.5">
+                      <b>Name</b>
+                      <b>Email</b>
+                      <b>Admin</b>
+                      <b>Action</b>
+                      <b>Edit</b>
                     </div>
 
                     {
                       userList?.map((item) => (
                         <div
                           key={item?._id}
-                          className="grid grid-cols-[2fr_1fr_1fr] md:grid-cols-[2fr_2fr_1fr_1fr] items-center py-2 px-2 border my-1.5"
+                          className="grid grid-cols-[2fr_1fr_1fr] md:grid-cols-[2fr_2fr_1fr_1fr_1fr] items-center py-2 px-2 border my-1.5"
                         >
                           <p>{item?.name}</p>
                           <p>{item?.email}</p>
+                          <p className={item.isAdmin ? 'text-blue-500 font-bold' : 'text-normal'}>{item.isAdmin ? 'Admin' : 'User'}</p>
                           <RxCross2 />
                           <button className="bg-blue-500 text-white px-2 py-1 rounded">Edit</button>
                         </div>

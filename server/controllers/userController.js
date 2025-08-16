@@ -7,7 +7,8 @@ const createToken = (user) => {
     return jwt.sign({
         _id: user._id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        isAdmin: user.isAdmin,
     },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
@@ -16,7 +17,7 @@ const createToken = (user) => {
 
 const userRegister = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, isAdmin } = req.body;
 
         // Request body verification
         if (!name) {
@@ -68,6 +69,7 @@ const userRegister = async (req, res) => {
             name,
             email,
             password: encryptedPassword,
+            isAdmin,
         })
 
         // save the user in database
@@ -110,7 +112,7 @@ const userLogin = async (req, res) => {
                 message: 'Password is required'
             })
         }
-        
+
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (isMatch) {
@@ -132,45 +134,74 @@ const userLogin = async (req, res) => {
         res.json({ success: true, message: error?.error })
     }
 };
-const adminLogin = async (req, res)=>{
-    try{
-        const {email, password} = req.body;
+const adminLogin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-        if(
-            email === process.env.ADMIN_EMAIL &&
-            password === process.env.ADMIN_PASSWORD
-        ){
-             const token = jwt.sign(email + password, process.env.JWT_SECRET);
-             res.json({
-                success:true,
-                 token,
-                 message: 'welcome admin user'
-             })
-        }
-        else{
-            res.json({
-              success: false,
-              message: 'Invalid credentials'
+        if (!email) {
+            return res.json({
+                success: false,
+                message: 'Email is required'
             })
         }
 
-    }catch(error){
+        // If user exist 
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "User doesn't exist"
+            })
+        }
+
+        if (!password) {
+            return res.json({
+                success: false,
+                message: 'Password is required'
+            })
+        }
+
+        if (!user?.isAdmin) {
+            return res.json({
+                success: false,
+                message: 'You are not authorized to login'
+            })
+        }
+        const isMatch = await bcrypt.compare(password, user.password);
+
+
+        if (isMatch && user.isAdmin) {
+            const token = createToken(user)
+            res.json({
+                success: true,
+                token,
+                message: 'Admin logged in successfully'
+            })
+        }
+        else {
+            return res.json({
+                success: false,
+                message: 'Password not matched, try again'
+            })
+        }
+
+    } catch (error) {
         console.log('Admin Login error', error)
         res.json({
             success: false,
-            message:error.message
+            message: error.message
         })
     }
 
 }
-const removeUser = async (req, res)=>{
-    try{
-   await userModel.findByIdAndDelete(req.body._id);
-   res.json({
-    success: true,
-    message: 'User deleted successfully'
-   })
-    }catch(error){
+const removeUser = async (req, res) => {
+    try {
+        await userModel.findByIdAndDelete(req.body._id);
+        res.json({
+            success: true,
+            message: 'User deleted successfully'
+        })
+    } catch (error) {
         console.log('Removed user error', error)
         res.json({
             success: false,
@@ -178,47 +209,47 @@ const removeUser = async (req, res)=>{
         })
     }
 }
-const updateUser = async (req, res)=>{
-    try{
-     const {_id, email, password, name} = req.body;
-     const user = await userModel.findById(_id);
+const updateUser = async (req, res) => {
+    try {
+        const { _id, email, password, name } = req.body;
+        const user = await userModel.findById(_id);
 
-     if(!user){
-        return res.json({
-            success:false,
-            message: 'User not found'
-        })
-     }
-     if(name) user.name = name;
-     if(email){
-        if (!validator.isEmail(email)) {
+        if (!user) {
             return res.json({
                 success: false,
-                message: 'Please enter a valid email'
+                message: 'User not found'
             })
         }
-        user.email = email;
-     }
-
-     if(password){
-         if (password.length < 8) {
-            return res.json({
-                success: true,
-                message: 'Give password more than 8 charter'
-            })
+        if (name) user.name = name;
+        if (email) {
+            if (!validator.isEmail(email)) {
+                return res.json({
+                    success: false,
+                    message: 'Please enter a valid email'
+                })
+            }
+            user.email = email;
         }
-         // Hashing user password
-        const salt = await bcrypt.genSalt(10)
-        user.password = await bcrypt.hash(password, salt)
-     }
 
-    //  updating the user 
-    await user.save();
-    res.json({
-        success:true,
-        message: 'User update successfully'
-    })
-    }catch(error){
+        if (password) {
+            if (password.length < 8) {
+                return res.json({
+                    success: true,
+                    message: 'Give password more than 8 charter'
+                })
+            }
+            // Hashing user password
+            const salt = await bcrypt.genSalt(10)
+            user.password = await bcrypt.hash(password, salt)
+        }
+
+        //  updating the user 
+        await user.save();
+        res.json({
+            success: true,
+            message: 'User update successfully'
+        })
+    } catch (error) {
         console.log('Update user error', error)
         res.json({
             success: false,
@@ -226,18 +257,18 @@ const updateUser = async (req, res)=>{
         })
     }
 }
-const getUser = async (req, res)=>{
-    try{
+const getUser = async (req, res) => {
+    try {
         const total = await userModel.countDocuments({});
         const users = await userModel.find({});
 
         res.json({
-            success:true,
+            success: true,
             total,
-            users 
+            users
         })
 
-    }catch(error){
+    } catch (error) {
         console.log('Get all user error', error)
         res.json({
             success: false,
@@ -246,7 +277,7 @@ const getUser = async (req, res)=>{
     }
 }
 
-export{
+export {
     userRegister,
     userLogin,
     adminLogin,
